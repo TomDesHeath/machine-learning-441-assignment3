@@ -1,0 +1,7 @@
+Dataset,Type,N,D,Target
+Iris,Classification (Low),150,4,3 Classes
+Diabetes,Classification (Med),768,8,2 Classes
+Glass,Classification (High),214,9,6 Classes
+1D Sine,Regression (Low),200,1,Continuous
+Franke 2D,Regression (Med),400,2,Continuous
+Housing,Regression (High),506,9,Continuous

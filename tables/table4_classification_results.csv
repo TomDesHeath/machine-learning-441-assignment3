@@ -1,0 +1,10 @@
+Dataset,Algorithm,Accuracy,Balanced_Acc,Macro_F1,Cohen_Kappa,Runtime_Sec,Func_Evals
+classification_1_iris,SGD,96.00 ± 1.33,95.75 ± 1.37,95.91 ± 1.16,0.9388 ± 0.0204,0.026,400
+classification_1_iris,SCG,96.67 ± 2.98,96.38 ± 3.04,96.43 ± 3.09,0.9491 ± 0.0453,0.053,799
+classification_1_iris,LeapFrog,96.67 ± 2.98,96.38 ± 3.04,96.43 ± 3.09,0.9491 ± 0.0453,0.028,409
+classification_2_diabetes,SGD,100.00 ± 0.00,100.00 ± 0.00,100.00 ± 0.00,1.0000 ± 0.0000,0.076,400
+classification_2_diabetes,SCG,100.00 ± 0.00,100.00 ± 0.00,100.00 ± 0.00,1.0000 ± 0.0000,0.000,3
+classification_2_diabetes,LeapFrog,100.00 ± 0.00,100.00 ± 0.00,100.00 ± 0.00,1.0000 ± 0.0000,0.068,350
+classification_3_glass,SGD,55.16 ± 5.00,37.79 ± 2.76,31.85 ± 2.70,0.3654 ± 0.0777,0.042,400
+classification_3_glass,SCG,70.16 ± 7.98,67.16 ± 7.35,61.58 ± 9.79,0.5931 ± 0.1066,0.088,801
+classification_3_glass,LeapFrog,65.91 ± 4.63,59.30 ± 8.90,55.23 ± 8.82,0.5243 ± 0.0668,0.044,408

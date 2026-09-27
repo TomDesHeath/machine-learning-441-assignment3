@@ -78,9 +78,7 @@ def run_phase_2_hidden_unit_tuning():
 
     for idx, ds_name in enumerate(tuning_datasets):
         X, y, problem_type = load_benchmark_dataset(ds_name)
-        scaler = MinMaxScalerCustom()
-        X_scaled = scaler.fit_transform(X)
-        N, D = X_scaled.shape
+        N, D = X.shape
 
         if problem_type == "classification":
             num_classes = len(np.unique(y))
@@ -100,8 +98,10 @@ def run_phase_2_hidden_unit_tuning():
             fold_times = []
 
             for train_idx, val_idx in folds:
-                X_tr, Y_tr = X_scaled[train_idx], Y_onehot[train_idx]
-                X_va, Y_va = X_scaled[val_idx], Y_onehot[val_idx]
+                scaler = MinMaxScalerCustom()
+                X_tr = scaler.fit_transform(X[train_idx])
+                X_va = scaler.transform(X[val_idx])
+                Y_tr, Y_va = Y_onehot[train_idx], Y_onehot[val_idx]
 
                 model = FeedforwardNeuralNetwork(D, nh, output_dim, problem_type=problem_type)
                 opt = SCGOptimizer()
@@ -195,9 +195,7 @@ def run_phase_4_full_benchmark_cv():
         print(f"Evaluating Dataset [{d_idx+1}/6]: {ds_name}...")
         X, y, problem_type = load_benchmark_dataset(ds_name)
         
-        scaler = MinMaxScalerCustom()
-        X_scaled = scaler.fit_transform(X)
-        N, D = X_scaled.shape
+        N, D = X.shape
         nh = optimal_nh[ds_name]
 
         if problem_type == "classification":
@@ -222,8 +220,10 @@ def run_phase_4_full_benchmark_cv():
             first_fold_loss_history = []
 
             for f_idx, (train_idx, val_idx) in enumerate(folds):
-                X_tr, Y_tr = X_scaled[train_idx], Y_target[train_idx]
-                X_va, Y_va = X_scaled[val_idx], Y_target[val_idx]
+                scaler = MinMaxScalerCustom()
+                X_tr = scaler.fit_transform(X[train_idx])
+                X_va = scaler.transform(X[val_idx])
+                Y_tr, Y_va = Y_target[train_idx], Y_target[val_idx]
                 y_va_true = y[val_idx]
 
                 model = FeedforwardNeuralNetwork(

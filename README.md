@@ -3,9 +3,7 @@
 **Student Name**: Tom Des Heath  
 **Student ID**: 24888923  
 **Module**: Machine Learning 441 (CS441 / RW441)  
-**Report Title**: *Comparative Empirical Evaluation of Feedforward Neural Network Training Algorithms: Stochastic Gradient Descent, Scaled Conjugate Gradient, and LeapFrog Optimization*  
-**Deliverable PDF**: `24888923RW441assignment3.pdf`  
-**Deliverable ZIP**: `24888923RW441assignment3.zip`  
+**Report Title**: *Comparative Empirical Evaluation of Feedforward Neural Network Training Algorithms: Stochastic Gradient Descent, Scaled Conjugate Gradient, and LeapFrog Optimization* 
 
 ---
 
@@ -14,7 +12,7 @@
 This repository contains a pure Python, from-scratch implementation and comparative evaluation of three feedforward neural network (FNN) training algorithms:
 1. **Stochastic Gradient Descent (SGD)** with Momentum.
 2. **Scaled Conjugate Gradient (SCG)** (Møller 1993).
-3. **LeapFrog (LFROG) Optimization** (Snyman 1982, 1983).
+3. **LeapFrog Optimization** (Snyman 1982, 1983).
 
 The evaluation is conducted across 6 benchmark problems (3 classification and 3 regression) using 5-fold cross-validation and non-parametric statistical evaluation (Friedman test and Nemenyi Critical Difference plot).
 
@@ -29,7 +27,6 @@ assignment_3/
 ├── run_experiments.py                  # Full experiment pipeline execution
 ├── 24888923RW441assignment3.tex        # Primary LaTeX report source file
 ├── 24888923RW441assignment3.pdf        # Compiled IEEE PDF report
-├── 24888923RW441assignment3.zip        # Final submission package
 ├── src/                                # Pure Python algorithmic code from scratch
 │   ├── __init__.py
 │   ├── neural_network.py               # Feedforward Neural Network architecture & backpropagation
@@ -83,7 +80,6 @@ To reproduce all experiments, generate figures, output tables, and compile the L
 python3 run_all.py --no-show
 
 # 2. Compile the primary LaTeX PDF report
-pdflatex -interaction=nonstopmode 24888923RW441assignment3.tex
 pdflatex -interaction=nonstopmode 24888923RW441assignment3.tex
 ```
 

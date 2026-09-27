@@ -24,7 +24,7 @@ Email: 24888923@sun.ac.za}
 \maketitle
 
 \begin{abstract}
-Supervised learning in feedforward neural networks requires solving non-convex parameter optimization problems over complex loss surfaces. First-order gradient descent methods frequently suffer from slow convergence rates, high sensitivity to learning rate selection, and ill-conditioned curvature oscillations. This paper presents a comparative empirical evaluation of three feedforward neural network training algorithms: stochastic gradient descent (SGD) with momentum, scaled conjugate gradient (SCG) optimization, and the physical trajectory LeapFrog optimizer. All neural network architectures, backpropagation gradients, and optimization procedures were implemented from scratch in pure Python. Evaluation was conducted across three benchmark classification problems (Iris, Pima Indians Diabetes, and Glass Identification) and three function approximation problems (1D Sine Wave, 2D Franke function, and Housing price estimation) using five-fold cross-validation. Experimental results demonstrate that SCG achieves superior convergence efficiency, reaching low error thresholds in significantly fewer function evaluations compared to first-order SGD. Non-parametric statistical evaluation using the Friedman omnibus test ($F_F = 8.5849, p = 0.0068$) and Nemenyi post-hoc critical difference analysis confirmed the statistically significant performance advantage of second-order Hessian scaling over standard gradient descent.
+Supervised learning in feedforward neural networks requires solving non-convex parameter optimization problems over complex loss surfaces. First-order gradient descent methods frequently suffer from slow convergence rates, high sensitivity to learning rate selection, and ill-conditioned curvature oscillations. This paper presents a comparative empirical evaluation of three feedforward neural network training algorithms: stochastic gradient descent (SGD) with momentum, scaled conjugate gradient (SCG) optimization, and the physical trajectory LeapFrog optimizer. All neural network architectures, backpropagation gradients, and optimization procedures were implemented from scratch in pure Python. Evaluation was conducted across three benchmark classification problems (Iris, Pima Indians Diabetes, and Glass Identification) and three function approximation problems (1D Sine Wave, 2D Franke function, and Housing price estimation) using five-fold cross-validation. Experimental results demonstrate that SCG achieves superior convergence efficiency, reaching low error thresholds in significantly fewer function evaluations compared to first-order SGD. Non-parametric statistical evaluation using the Friedman omnibus test ($F_F = 21.6667, p = 0.0002$) and Nemenyi post-hoc critical difference analysis confirmed the statistically significant performance advantage of second-order Hessian scaling over standard gradient descent.
 \end{abstract}
 
 %\begin{IEEEkeywords}
@@ -46,55 +46,56 @@ This section provides the mathematical formulations governing feedforward neural
 
 Consider a single hidden layer feedforward neural network mapping an input vector $\mathbf{x} \in \mathbb{R}^D$ to an output vector $\mathbf{\hat{y}} \in \mathbb{R}^K$. Let $n_h$ denote the number of hidden layer units. The forward transformation is defined by:
 \begin{equation}
-\mathbf{a}_1 = \mathbf{W}^{(1)} \mathbf{x} + \mathbf{b}^{(1)}, \quad \mathbf{y}_1 = f_h(\mathbf{a}_1)
+\mathbf{a}_1 = \mathbf{W}^{(1)} \mathbf{x} + \mathbf{b}^{(1)}, \quad \mathbf{y}_1 = f_h(\mathbf{a}_1),
 \end{equation}
 \begin{equation}
-\mathbf{a}_2 = \mathbf{W}^{(2)} \mathbf{y}_1 + \mathbf{b}^{(2)}, \quad \mathbf{\hat{y}} = f_o(\mathbf{a}_2)
+\mathbf{a}_2 = \mathbf{W}^{(2)} \mathbf{y}_1 + \mathbf{b}^{(2)}, \quad \mathbf{\hat{y}} = f_o(\mathbf{a}_2),
 \end{equation}
 where $\mathbf{W}^{(1)} \in \mathbb{R}^{n_h \times D}$ and $\mathbf{b}^{(1)} \in \mathbb{R}^{n_h}$ represent hidden layer weights and biases, while $\mathbf{W}^{(2)} \in \mathbb{R}^{K \times n_h}$ and $\mathbf{b}^{(2)} \in \mathbb{R}^K$ represent output layer weights and biases. The hidden activation function $f_h(a)$ is chosen as the logistic sigmoid function:
 \begin{equation}
-f_h(a) = \frac{1}{1 + e^{-a}}
+f_h(a) = \frac{1}{1 + e^{-a}}.
 \end{equation}
 The sigmoid activation satisfies the universal approximation property for single-hidden-layer networks \cite{cybenko1989approximation} and provides $C^\infty$ smoothness, guaranteeing continuous gradients and well-defined curvature required by second-order and dynamic trajectory optimizers.
 
 For function approximation (regression) tasks, the output activation function is the linear identity $f_o(a) = a$. Paired with mean squared error (MSE), this corresponds to the maximum likelihood objective under an assumption of homoscedastic Gaussian noise, regularized by an $L_2$ weight decay term with hyperparameter $\gamma > 0$:
 \begin{equation}
-E(\mathbf{w}) = \frac{1}{2N} \sum_{i=1}^N \|\mathbf{y}_i - \mathbf{\hat{y}}_i\|^2 + \frac{\gamma}{2} \|\mathbf{w}\|^2
+E(\mathbf{w}) = \frac{1}{2N} \sum_{i=1}^N \|\mathbf{y}_i - \mathbf{\hat{y}}_i\|^2 + \frac{\gamma}{2} \|\mathbf{w}\|^2.
 \end{equation}
 For multi-class classification tasks with $C$ classes, the output activation is the normalized softmax function:
 \begin{equation}
-f_o(\mathbf{a})_c = \frac{e^{a_c}}{\sum_{k=1}^C e^{a_k}}, \quad c \in \{1, \dots, C\}
+f_o(\mathbf{a})_c = \frac{e^{a_c}}{\sum_{k=1}^C e^{a_k}}, \quad c \in \{1, \dots, C\},
 \end{equation}
 paired with the categorical cross-entropy loss function:
 \begin{equation}
-E(\mathbf{w}) = -\frac{1}{N} \sum_{i=1}^N \sum_{c=1}^C y_{i,c} \ln(\hat{y}_{i,c}) + \frac{\gamma}{2} \|\mathbf{w}\|^2
+E(\mathbf{w}) = -\frac{1}{N} \sum_{i=1}^N \sum_{c=1}^C y_{i,c} \ln(\hat{y}_{i,c}) + \frac{\gamma}{2} \|\mathbf{w}\|^2,
 \end{equation}
 where $\mathbf{w} \in \mathbb{R}^M$ represents the flattened parameter vector of total dimension $M = n_h(D + 1) + K(n_h + 1)$.
 
 Both configurations establish canonical link pairings (linear with MSE, softmax with cross-entropy). This formulation prevents output-layer gradient saturation and simplifies the analytic parameter gradients $\nabla E(\mathbf{w}) = \mathbf{g}(\mathbf{w})$ computed via backpropagation, yielding an identical linear output error vector $\boldsymbol{\delta}_2$ for both objectives:
 \begin{equation}
-\boldsymbol{\delta}_2 = \frac{1}{N} (\mathbf{\hat{y}} - \mathbf{y})
+\boldsymbol{\delta}_2 = \frac{1}{N} (\mathbf{\hat{y}} - \mathbf{y}).
 \end{equation}
 The hidden layer error vector $\boldsymbol{\delta}_1$ is obtained via backward propagation through the transpose weight matrix $\mathbf{W}^{(2)}$:
 \begin{equation}
-\boldsymbol{\delta}_1 = (\mathbf{W}^{(2)T} \boldsymbol{\delta}_2) \odot f_h'(\mathbf{a}_1)
+\boldsymbol{\delta}_1 = (\mathbf{W}^{(2)T} \boldsymbol{\delta}_2) \odot f_h'(\mathbf{a}_1),
 \end{equation}
 where $\odot$ represents the element-wise Hadamard product, and $f_h'(a) = y_1(1 - y_1)$. Parameter gradients are then evaluated as:
 \begin{equation}
-\frac{\partial E}{\partial \mathbf{W}^{(2)}} = \boldsymbol{\delta}_2 \mathbf{y}_1^T + \gamma \mathbf{W}^{(2)}, \quad \frac{\partial E}{\partial \mathbf{b}^{(2)}} = \boldsymbol{\delta}_2
+\frac{\partial E}{\partial \mathbf{W}^{(2)}} = \boldsymbol{\delta}_2 \mathbf{y}_1^T + \gamma \mathbf{W}^{(2)}, \quad \frac{\partial E}{\partial \mathbf{b}^{(2)}} = \boldsymbol{\delta}_2,
 \end{equation}
 \begin{equation}
-\frac{\partial E}{\partial \mathbf{W}^{(1)}} = \boldsymbol{\delta}_1 \mathbf{x}^T + \gamma \mathbf{W}^{(1)}, \quad \frac{\partial E}{\partial \mathbf{b}^{(1)}} = \boldsymbol{\delta}_1
+\frac{\partial E}{\partial \mathbf{W}^{(1)}} = \boldsymbol{\delta}_1 \mathbf{x}^T + \gamma \mathbf{W}^{(1)}, \quad \frac{\partial E}{\partial \mathbf{b}^{(1)}} = \boldsymbol{\delta}_1.
 \end{equation}
+Equations (7)--(10) represent batch-vectorized matrix operations evaluated across $N$ training instances, matching the analytical gradient implementation.
 
 \subsection{Stochastic Gradient Descent with Momentum}
 
 Stochastic gradient descent updates the parameter vector $\mathbf{w}_t$ along the negative gradient direction. Incorporating a momentum coefficient $\alpha \in [0, 1)$ stabilizes weight updates across successive iterations:
 \begin{equation}
-\mathbf{v}_{t+1} = \alpha \mathbf{v}_t - \eta \nabla E(\mathbf{w}_t)
+\mathbf{v}_{t+1} = \alpha \mathbf{v}_t - \eta \nabla E(\mathbf{w}_t),
 \end{equation}
 \begin{equation}
-\mathbf{w}_{t+1} = \mathbf{w}_t + \mathbf{v}_{t+1}
+\mathbf{w}_{t+1} = \mathbf{w}_t + \mathbf{v}_{t+1},
 \end{equation}
 where $\eta > 0$ represents the step-size learning rate, and $\mathbf{v}_t$ denotes the accumulation velocity vector.
 
@@ -102,41 +103,41 @@ where $\eta > 0$ represents the step-size learning rate, and $\mathbf{v}_t$ deno
 
 The scaled conjugate gradient algorithm, proposed by Møller \cite{moller1993scaled}, combines conjugate direction search with second-order Hessian scaling. Let $\mathbf{p}_k$ denote the search direction at iteration $k$, and $\mathbf{r}_k = -\mathbf{g}_k = -\nabla E(\mathbf{w}_k)$ represent the residual vector. Second-order information is estimated via a finite-difference approximation along direction $\mathbf{p}_k$:
 \begin{equation}
-\mathbf{s}_k = \frac{\nabla E(\mathbf{w}_k + \sigma_k \mathbf{p}_k) - \nabla E(\mathbf{w}_k)}{\sigma_k}
+\mathbf{s}_k = \frac{\nabla E(\mathbf{w}_k + \sigma_k \mathbf{p}_k) - \nabla E(\mathbf{w}_k)}{\sigma_k},
 \end{equation}
 where $\sigma_k = \sigma / \|\mathbf{p}_k\|$ with scalar perturbation $\sigma = 10^{-4}$. To ensure positive definiteness of the Hessian approximation, SCG scales the curvature scalar $\delta_k = \mathbf{p}_k^T \mathbf{s}_k$ using scale parameter $\lambda_k > 0$:
 \begin{equation}
-\bar{\delta}_k = \delta_k + (\lambda_k - \bar{\lambda}_k) \|\mathbf{p}_k\|^2
+\bar{\delta}_k = \delta_k + (\lambda_k - \bar{\lambda}_k) \|\mathbf{p}_k\|^2.
 \end{equation}
 If $\bar{\delta}_k \le 0$, the scaling factor is updated according to:
 \begin{equation}
-\bar{\lambda}_k = 2 \left( \lambda_k - \frac{\bar{\delta}_k}{\|\mathbf{p}_k\|^2} \right), \quad \lambda_k = \bar{\lambda}_k
+\bar{\lambda}_k = 2 \left( \lambda_k - \frac{\bar{\delta}_k}{\|\mathbf{p}_k\|^2} \right), \quad \lambda_k = \bar{\lambda}_k.
 \end{equation}
 The optimal step size $\alpha_k$ along direction $\mathbf{p}_k$ is evaluated directly:
 \begin{equation}
-\alpha_k = \frac{\mathbf{p}_k^T \mathbf{r}_k}{\bar{\delta}_k}
+\alpha_k = \frac{\mathbf{p}_k^T \mathbf{r}_k}{\bar{\delta}_k}.
 \end{equation}
 A comparison parameter $\Delta_k$ measures the ratio of actual loss reduction to quadratic approximation model reduction:
 \begin{equation}
-\Delta_k = \frac{2 \bar{\delta}_k [E(\mathbf{w}_k) - E(\mathbf{w}_k + \alpha_k \mathbf{p}_k)]}{(\mathbf{p}_k^T \mathbf{r}_k)^2}
+\Delta_k = \frac{2 \bar{\delta}_k [E(\mathbf{w}_k) - E(\mathbf{w}_k + \alpha_k \mathbf{p}_k)]}{(\mathbf{p}_k^T \mathbf{r}_k)^2}.
 \end{equation}
 If $\Delta_k \ge 0$, the step is accepted ($\mathbf{w}_{k+1} = \mathbf{w}_k + \alpha_k \mathbf{p}_k$), and the scale parameter $\lambda_k$ is reduced. If $\Delta_k < 0.25$, $\lambda_k$ is increased. Conjugate direction updates follow the Polak-Ribière formula:
 \begin{equation}
-\beta_k = \frac{\|\mathbf{r}_{k+1}\|^2 - \mathbf{r}_{k+1}^T \mathbf{r}_k}{\mathbf{p}_k^T \mathbf{r}_k}, \quad \mathbf{p}_{k+1} = \mathbf{r}_{k+1} + \beta_k \mathbf{p}_k
+\beta_k = \frac{\|\mathbf{r}_{k+1}\|^2 - \mathbf{r}_{k+1}^T \mathbf{r}_k}{\mathbf{p}_k^T \mathbf{r}_k}, \quad \mathbf{p}_{k+1} = \mathbf{r}_{k+1} + \beta_k \mathbf{p}_k.
 \end{equation}
 
 \subsection{LeapFrog Optimization}
 
 The LeapFrog optimization algorithm, introduced by Snyman \cite{snyman1982improved, snyman1983practical}, conceptualizes function minimization as tracking a unit-mass particle moving in a conservative potential force field $\mathbf{a}(\mathbf{w}) = -\nabla E(\mathbf{w})$. The continuous physical state equations are integrated using a half-step velocity formulation:
 \begin{equation}
-\mathbf{v}_{t+1/2} = \mathbf{v}_{t-1/2} + \mathbf{a}(\mathbf{w}_t) \Delta t
+\mathbf{v}_{t+1/2} = \mathbf{v}_{t-1/2} + \mathbf{a}(\mathbf{w}_t) \Delta t,
 \end{equation}
 \begin{equation}
-\mathbf{w}_{t+1} = \mathbf{w}_t + \mathbf{v}_{t+1/2} \Delta t
+\mathbf{w}_{t+1} = \mathbf{w}_t + \mathbf{v}_{t+1/2} \Delta t,
 \end{equation}
 where $\Delta t$ represents the integration timestep. Full-step velocity is estimated as:
 \begin{equation}
-\mathbf{v}_t = \frac{1}{2} (\mathbf{v}_{t-1/2} + \mathbf{v}_{t+1/2})
+\mathbf{v}_t = \frac{1}{2} (\mathbf{v}_{t-1/2} + \mathbf{v}_{t+1/2}).
 \end{equation}
 To prevent particle overshooting when traversing steep valley walls, LeapFrog applies an interfering strategy. If the velocity vector forms an obtuse angle with the acceleration vector ($\mathbf{v}_t^T \mathbf{a}_t < 0$) or if loss increases ($E(\mathbf{w}_{t+1}) > E(\mathbf{w}_t)$), the particle has passed a local potential minimum. The algorithm resets velocity to zero at the midpoint position, halves the integration step size ($\Delta t \leftarrow 0.5 \Delta t$), and restarts acceleration from the valley floor.
 
@@ -144,19 +145,19 @@ To prevent particle overshooting when traversing steep valley walls, LeapFrog ap
 
 To compare multiple optimization algorithms across diverse benchmark datasets without imposing normality assumptions, this study follows the statistical evaluation protocol described by Dem\v{s}ar \cite{demsar2006statistical}. For $N$ datasets and $K$ algorithms, performance metrics are converted to ranks per dataset, where rank 1 corresponds to the best performance. Let $r_i^j$ denote the rank of algorithm $j$ on dataset $i$. The average rank $R_j$ is calculated as:
 \begin{equation}
-R_j = \frac{1}{N} \sum_{i=1}^N r_i^j
+R_j = \frac{1}{N} \sum_{i=1}^N r_i^j.
 \end{equation}
 The omnibus Friedman chi-square statistic $\chi_F^2$ is defined by:
 \begin{equation}
-\chi_F^2 = \frac{12 N}{K(K+1)} \left[ \sum_{j=1}^K R_j^2 - \frac{K(K+1)^2}{4} \right]
+\chi_F^2 = \frac{12 N}{K(K+1)} \left[ \sum_{j=1}^K R_j^2 - \frac{K(K+1)^2}{4} \right].
 \end{equation}
 Iman and Davenport showed that $\chi_F^2$ exhibits conservative bias and proposed the $F$-distribution derivative statistic $F_F$:
 \begin{equation}
-F_F = \frac{(N - 1) \chi_F^2}{N(K - 1) - \chi_F^2}
+F_F = \frac{(N - 1) \chi_F^2}{N(K - 1) - \chi_F^2},
 \end{equation}
 which follows an $F$-distribution with $K-1$ and $(N-1)(K-1)$ degrees of freedom. If the null hypothesis of equal performance is rejected, the Nemenyi post-hoc test determines pairwise statistical differences. The critical difference (CD) threshold at significance level $\alpha = 0.05$ is given by:
 \begin{equation}
-CD = q_{\alpha} \sqrt{\frac{K(K+1)}{6 N}}
+CD = q_{\alpha} \sqrt{\frac{K(K+1)}{6 N}},
 \end{equation}
 where critical value $q_{0.05} = 2.343$ for $K = 3$ algorithms. Performance differences between two algorithms are statistically significant if their average rank difference exceeds $CD$.
 
@@ -174,7 +175,7 @@ The software architecture is modularized into four distinct packages inside \tex
 
 Mathematical precision was verified by comparing analytical backpropagation gradients against numerical finite-difference gradients evaluated via central differences:
 \begin{equation}
-g_{\text{num}}(\mathbf{w}_i) = \frac{E(\mathbf{w} + \epsilon \mathbf{e}_i) - E(\mathbf{w} - \epsilon \mathbf{e}_i)}{2\epsilon}
+g_{\text{num}}(\mathbf{w}_i) = \frac{E(\mathbf{w} + \epsilon \mathbf{e}_i) - E(\mathbf{w} - \epsilon \mathbf{e}_i)}{2\epsilon}.
 \end{equation}
 Gradient check validation produced relative error norms lower than $10^{-9}$ across all network dimensions, verifying exact mathematical correctness. Algorithms 1 and 2 summarize the execution steps for Scaled Conjugate Gradient and LeapFrog optimization.
 
@@ -190,7 +191,7 @@ Gradient check validation produced relative error norms lower than $10^{-9}$ acr
     \ENDIF
     \STATE Scale Hessian: $\bar{\delta}_k = \delta_k + (\lambda_k - \bar{\lambda}_k) \|\mathbf{p}_k\|^2$.
     \IF{$\bar{\delta}_k \le 0$}
-        \STATE $\bar{\lambda}_k = 2(\lambda_k - \frac{\bar{\delta}_k}{\|\mathbf{p}_k\|^2})$, $\lambda_k = \bar{\lambda}_k$.
+        \STATE $\bar{\lambda}_k = 2(\lambda_k - \frac{\bar{\delta}_k}{\|\mathbf{p}_k\|^2})$, $\bar{\delta}_k = -\bar{\delta}_k + \lambda_k \|\mathbf{p}_k\|^2$, $\lambda_k = \bar{\lambda}_k$.
     \ENDIF
     \STATE Compute step size $\alpha_k = \frac{\mathbf{p}_k^T \mathbf{r}_k}{\bar{\delta}_k}$.
     \STATE Compute comparison parameter $\Delta_k = \frac{2 \bar{\delta}_k [E(\mathbf{w}_k) - E(\mathbf{w}_k + \alpha_k \mathbf{p}_k)]}{(\mathbf{p}_k^T \mathbf{r}_k)^2}$.
@@ -268,7 +269,7 @@ The classification benchmarks comprise the Iris flower dataset ($N = 150, D = 4,
 
 All continuous input features were normalized to the interval $[0, 1]$ using min-max feature scaling:
 \begin{equation}
-x_{i, d}' = \frac{x_{i, d} - \min_k(x_{k, d})}{\max_k(x_{k, d}) - \min_k(x_{k, d})}
+x_{i, d}' = \frac{x_{i, d} - \min_k(x_{k, d})}{\max_k(x_{k, d}) - \min_k(x_{k, d})}.
 \end{equation}
 Min-max scaling prevents features with large absolute magnitude from dominating weight gradient updates. Categorical targets in multi-class classification datasets were converted to binary target vectors using one-hot encoding. Regression targets were scaled using z-score standardization to ensure zero mean and unit variance during backpropagation.
 
@@ -280,6 +281,8 @@ Optimization control parameters were systematically evaluated over search grids 
 \caption{Optimization Algorithm Hyperparameter Search Spaces}
 \label{tab:hyperparams}
 \centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
 \begin{tabular}{llcc}
 \toprule
 Algorithm & Hyperparameter & Search Space & Optimal Value \\
@@ -319,19 +322,19 @@ To balance network capacity against generalization loss, hidden layer unit sizes
 \toprule
 Dataset Name & Hidden Units ($n_h$) & Validation Loss & Execution Time (s) \\
 \midrule
-Diabetes & 2 & $2.208 \times 10^{-8}$ & 0.000168 \\
-Diabetes & 4 & $4.149 \times 10^{-8}$ & 0.000187 \\
-Diabetes & 8 & $5.350 \times 10^{-8}$ & 0.000230 \\
-Diabetes & 16 & $6.487 \times 10^{-8}$ & 0.000367 \\
-Diabetes & 32 & $7.451 \times 10^{-8}$ & 0.000645 \\
-Diabetes & 64 & $8.460 \times 10^{-8}$ & 0.001160 \\
+Diabetes & 2 & 0.4824 & 0.045 \\
+Diabetes & 4 & 0.4953 & 0.053 \\
+Diabetes & 8 & 0.4913 & 0.066 \\
+Diabetes & 16 & 0.5002 & 0.091 \\
+Diabetes & 32 & 0.4856 & 0.141 \\
+Diabetes & 64 & 0.4842 & 0.257 \\
 \midrule
-Franke 2D & 2 & $8.686 \times 10^{-3}$ & 0.017604 \\
-Franke 2D & 4 & $7.470 \times 10^{-3}$ & 0.022210 \\
-Franke 2D & 8 & $9.673 \times 10^{-3}$ & 0.029785 \\
-Franke 2D & 16 & $9.379 \times 10^{-3}$ & 0.041374 \\
-Franke 2D & 32 & $1.049 \times 10^{-2}$ & 0.066445 \\
-Franke 2D & 64 & $1.052 \times 10^{-2}$ & 0.116306 \\
+Franke 2D & 2 & $8.685 \times 10^{-3}$ & 0.018 \\
+Franke 2D & 4 & $6.912 \times 10^{-3}$ & 0.023 \\
+Franke 2D & 8 & $9.425 \times 10^{-3}$ & 0.031 \\
+Franke 2D & 16 & $9.503 \times 10^{-3}$ & 0.049 \\
+Franke 2D & 32 & $1.044 \times 10^{-2}$ & 0.077 \\
+Franke 2D & 64 & $1.060 \times 10^{-2}$ & 0.132 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -352,7 +355,7 @@ Figure 1 illustrates the logarithmic training loss trajectories of SGD, SCG, and
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.98\textwidth]{figures/fig1_convergence_curves.png}
-\caption{Logarithmic training loss trajectories for SGD, SCG, and LeapFrog across all six benchmark problems over 400 iterations.}
+\caption{Logarithmic training loss trajectories for stochastic gradient descent, scaled conjugate gradient, and LeapFrog across all six benchmark problems over 400 iterations.}
 \label{fig:convergence}
 \end{figure*}
 
@@ -370,27 +373,27 @@ Table IV presents five-fold cross-validation performance metrics (Accuracy, Bala
 \toprule
 Dataset Name & Algorithm & Accuracy (\%) & Balanced Acc (\%) & Macro F1 (\%) & Cohen's Kappa & Runtime (s) & Function Evals \\
 \midrule
-Iris & SGD & $96.00 \pm 1.33$ & $95.75 \pm 1.37$ & $95.91 \pm 1.16$ & $0.9388 \pm 0.0204$ & 0.025 & 400 \\
-Iris & SCG & $96.67 \pm 2.98$ & $96.38 \pm 3.04$ & $96.43 \pm 3.09$ & $0.9491 \pm 0.0453$ & 0.052 & 799 \\
-Iris & LeapFrog & $96.67 \pm 2.98$ & $96.38 \pm 3.04$ & $96.43 \pm 3.09$ & $0.9491 \pm 0.0453$ & 0.027 & 409 \\
+Iris & SGD & $96.00 \pm 1.33$ & $95.75 \pm 1.37$ & $95.91 \pm 1.16$ & $0.9388 \pm 0.0204$ & 0.027 & 400 \\
+Iris & SCG & $96.67 \pm 2.98$ & $96.38 \pm 3.04$ & $96.43 \pm 3.09$ & $0.9491 \pm 0.0453$ & 0.054 & 799 \\
+Iris & LeapFrog & $96.67 \pm 2.98$ & $96.38 \pm 3.04$ & $96.43 \pm 3.09$ & $0.9491 \pm 0.0453$ & 0.029 & 408 \\
 \midrule
-Diabetes & SGD & $100.00 \pm 0.00$ & $100.00 \pm 0.00$ & $100.00 \pm 0.00$ & $1.0000 \pm 0.0000$ & 0.073 & 400 \\
-Diabetes & SCG & $100.00 \pm 0.00$ & $100.00 \pm 0.00$ & $100.00 \pm 0.00$ & $1.0000 \pm 0.0000$ & 0.000 & 3 \\
-Diabetes & LeapFrog & $100.00 \pm 0.00$ & $100.00 \pm 0.00$ & $100.00 \pm 0.00$ & $1.0000 \pm 0.0000$ & 0.065 & 350 \\
+Diabetes & SGD & $74.35 \pm 2.78$ & $69.00 \pm 2.11$ & $69.67 \pm 2.40$ & $0.4012 \pm 0.0444$ & 0.098 & 400 \\
+Diabetes & SCG & $75.39 \pm 0.92$ & $71.58 \pm 2.17$ & $71.89 \pm 2.01$ & $0.4410 \pm 0.0412$ & 0.197 & 799 \\
+Diabetes & LeapFrog & $77.08 \pm 1.82$ & $73.16 \pm 2.31$ & $73.67 \pm 1.96$ & $0.4766 \pm 0.0367$ & 0.099 & 410 \\
 \midrule
-Glass & SGD & $55.16 \pm 5.00$ & $37.79 \pm 2.76$ & $31.85 \pm 2.70$ & $0.3654 \pm 0.0777$ & 0.040 & 400 \\
-Glass & SCG & $70.16 \pm 7.98$ & $67.16 \pm 7.35$ & $61.58 \pm 9.79$ & $0.5931 \pm 0.1066$ & 0.088 & 801 \\
-Glass & LeapFrog & $65.91 \pm 4.63$ & $59.30 \pm 8.90$ & $55.23 \pm 8.82$ & $0.5243 \pm 0.0668$ & 0.043 & 408 \\
+Glass & SGD & $56.09 \pm 4.82$ & $40.28 \pm 5.90$ & $34.03 \pm 4.33$ & $0.3785 \pm 0.0740$ & 0.046 & 400 \\
+Glass & SCG & $70.16 \pm 7.98$ & $65.17 \pm 8.32$ & $59.17 \pm 11.03$ & $0.5899 \pm 0.1090$ & 0.097 & 801 \\
+Glass & LeapFrog & $64.05 \pm 4.80$ & $58.06 \pm 9.16$ & $52.61 \pm 9.11$ & $0.5011 \pm 0.0676$ & 0.050 & 409 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-On the high-complexity multi-class Glass dataset ($C = 6$), SCG achieves a Macro F1 score of $61.58\% \pm 9.79\%$ and a Cohen's Kappa of $0.5931$, outperforming LeapFrog ($55.23\% \pm 8.82\%$) and SGD ($31.85\% \pm 2.70\%$). The substantial performance gap on the Glass dataset highlights the advantage of SCG in multi-class classification problems with imbalanced class distributions. Figure 5 shows normalized confusion matrices for the Glass dataset under each optimization method.
+On the high-complexity multi-class Glass dataset ($C = 6$), SCG achieves a Macro F1 score of $59.17\% \pm 11.03\%$ and a Cohen's Kappa of $0.5899$, outperforming LeapFrog ($52.61\% \pm 9.11\%$) and SGD ($34.03\% \pm 4.33\%$). The substantial performance gap on the Glass dataset highlights the advantage of SCG in multi-class classification problems with imbalanced class distributions. Figure 5 shows normalized confusion matrices for the Glass dataset under each optimization method.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.48\textwidth]{figures/fig5_confusion_matrices.png}
-\caption{Normalized five-fold cross-validation confusion matrices for the Glass dataset trained using SGD, SCG, and LeapFrog optimization.}
+\caption{Normalized five-fold cross-validation confusion matrices for the Glass dataset trained using stochastic gradient descent, scaled conjugate gradient, and LeapFrog optimization.}
 \label{fig:confusion}
 \end{figure}
 
@@ -406,22 +409,22 @@ Table V displays five-fold cross-validation regression metrics (MSE, RMSE, MAE, 
 \toprule
 Dataset Name & Algorithm & Mean Squared Error & Root Mean Sq Err & Mean Abs Error & $R^2$ Score & Runtime (s) & Function Evals \\
 \midrule
-1D Sine & SGD & $0.2001 \pm 0.0398$ & $0.4452 \pm 0.0434$ & $0.3914 \pm 0.0405$ & $0.5953 \pm 0.0789$ & 0.020 & 400 \\
-1D Sine & SCG & $0.0032 \pm 0.0014$ & $0.0557 \pm 0.0113$ & $0.0461 \pm 0.0087$ & $0.9934 \pm 0.0027$ & 0.042 & 775 \\
-1D Sine & LeapFrog & $0.0155 \pm 0.0072$ & $0.1211 \pm 0.0283$ & $0.0995 \pm 0.0214$ & $0.9683 \pm 0.0145$ & 0.022 & 410 \\
+1D Sine & SGD & $0.2001 \pm 0.0398$ & $0.4452 \pm 0.0434$ & $0.3914 \pm 0.0405$ & $0.5953 \pm 0.0788$ & 0.023 & 400 \\
+1D Sine & SCG & $0.0028 \pm 0.0006$ & $0.0525 \pm 0.0062$ & $0.0434 \pm 0.0042$ & $0.9943 \pm 0.0015$ & 0.048 & 774 \\
+1D Sine & LeapFrog & $0.0159 \pm 0.0078$ & $0.1225 \pm 0.0301$ & $0.1004 \pm 0.0225$ & $0.9674 \pm 0.0157$ & 0.026 & 410 \\
 \midrule
-Franke 2D & SGD & $0.0231 \pm 0.0024$ & $0.1518 \pm 0.0078$ & $0.1183 \pm 0.0062$ & $0.7016 \pm 0.0457$ & 0.041 & 400 \\
-Franke 2D & SCG & $0.0110 \pm 0.0031$ & $0.1037 \pm 0.0151$ & $0.0807 \pm 0.0171$ & $0.8555 \pm 0.0521$ & 0.082 & 798 \\
-Franke 2D & LeapFrog & $0.0199 \pm 0.0012$ & $0.1410 \pm 0.0043$ & $0.1022 \pm 0.0058$ & $0.7432 \pm 0.0330$ & 0.042 & 411 \\
+Franke 2D & SGD & $0.0231 \pm 0.0024$ & $0.1518 \pm 0.0079$ & $0.1183 \pm 0.0062$ & $0.7016 \pm 0.0457$ & 0.045 & 400 \\
+Franke 2D & SCG & $0.0118 \pm 0.0030$ & $0.1074 \pm 0.0145$ & $0.0839 \pm 0.0148$ & $0.8461 \pm 0.0502$ & 0.092 & 797 \\
+Franke 2D & LeapFrog & $0.0199 \pm 0.0012$ & $0.1410 \pm 0.0043$ & $0.1022 \pm 0.0058$ & $0.7431 \pm 0.0329$ & 0.049 & 411 \\
 \midrule
-Housing & SGD & $0.2825 \pm 0.0785$ & $0.5265 \pm 0.0729$ & $0.3740 \pm 0.0224$ & $0.7022 \pm 0.0827$ & 0.084 & 400 \\
-Housing & SCG & $0.2126 \pm 0.0762$ & $0.4532 \pm 0.0847$ & $0.3007 \pm 0.0448$ & $0.7764 \pm 0.0800$ & 0.169 & 801 \\
-Housing & LeapFrog & $0.2780 \pm 0.0814$ & $0.5215 \pm 0.0774$ & $0.3706 \pm 0.0264$ & $0.7071 \pm 0.0868$ & 0.089 & 414 \\
+Housing & SGD & $0.2846 \pm 0.0789$ & $0.5284 \pm 0.0733$ & $0.3742 \pm 0.0220$ & $0.6992 \pm 0.0862$ & 0.093 & 400 \\
+Housing & SCG & $0.2165 \pm 0.0801$ & $0.4571 \pm 0.0869$ & $0.3001 \pm 0.0423$ & $0.7750 \pm 0.0724$ & 0.187 & 800 \\
+Housing & LeapFrog & $0.2790 \pm 0.0815$ & $0.5225 \pm 0.0774$ & $0.3704 \pm 0.0251$ & $0.7057 \pm 0.0882$ & 0.097 & 413 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-On the 1D Sine Wave regression problem, SCG achieves an $R^2$ score of $0.9934 \pm 0.0027$ and an MSE of $0.0032$, compared to $0.9683$ for LeapFrog and $0.5953$ for SGD. On the bivariate Franke function, SCG yields an $R^2$ score of $0.8555$, outperforming LeapFrog ($0.7432$) and SGD ($0.7016$). Figure 4 shows the continuous function fit for the 1D Sine Wave and the predicted vs. target scatter plot for Franke 2D.
+On the 1D Sine Wave regression problem, SCG achieves an $R^2$ score of $0.9943 \pm 0.0015$ and an MSE of $0.0028$, compared to $0.9674$ for LeapFrog and $0.5953$ for SGD. On the bivariate Franke function, SCG yields an $R^2$ score of $0.8461$, outperforming LeapFrog ($0.7431$) and SGD ($0.7016$). Figure 4 shows the continuous function fit for the 1D Sine Wave and the predicted vs. target scatter plot for Franke 2D.
 
 \begin{figure}[t]
 \centering
@@ -438,23 +441,25 @@ To establish non-parametric statistical superiority across all six benchmark dat
 \caption{Non-Parametric Statistical Ranking and Friedman Test Metrics}
 \label{tab:statistical_ranks}
 \centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lccccc}
 \toprule
 Algorithm & Avg Rank & $\chi_F^2$ & $F_F$ Stat & $p$-Value & Nemenyi CD \\
 \midrule
-SCG & \textbf{1.25} & 7.5833 & 8.5849 & \textbf{0.0068} & 1.3527 \\
-LeapFrog & 1.92 & 7.5833 & 8.5849 & 0.0068 & 1.3527 \\
-SGD & 2.83 & 7.5833 & 8.5849 & 0.0068 & 1.3527 \\
+SCG & \textbf{1.25} & 9.7500 & 21.6667 & \textbf{0.0002} & 1.3527 \\
+LeapFrog & 1.75 & 9.7500 & 21.6667 & 0.0002 & 1.3527 \\
+SGD & 3.00 & 9.7500 & 21.6667 & 0.0002 & 1.3527 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-SCG achieved the lowest average rank ($1.25$), followed by LeapFrog ($1.92$) and SGD ($2.83$). The Friedman test statistic ($F_F = 8.5849, p = 0.0068$) rejects the null hypothesis of equal performance at significance level $\alpha = 0.05$. The Nemenyi critical difference threshold is $CD = 1.3527$. The rank difference between SCG ($1.25$) and SGD ($2.83$) is $1.58$, exceeding $CD = 1.3527$, confirming that SCG is statistically significantly superior to SGD across the evaluated benchmark suite. Figure 3 displays the Nemenyi Critical Difference plot.
+SCG achieved the lowest average rank ($1.25$), followed by LeapFrog ($1.75$) and SGD ($3.00$). The Friedman test statistic ($F_F = 21.6667, p = 0.0002$) rejects the null hypothesis of equal performance at significance level $\alpha = 0.05$. The Nemenyi critical difference threshold is $CD = 1.3527$. The rank difference between SCG ($1.25$) and SGD ($3.00$) is $1.75$, exceeding $CD = 1.3527$, confirming that SCG is statistically significantly superior to SGD across the evaluated benchmark suite. Figure 3 displays the Nemenyi Critical Difference plot.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.48\textwidth]{figures/fig3_critical_difference.png}
-\caption{Nemenyi Critical Difference (CD) diagram at $\alpha = 0.05$. Lower average ranks indicate superior performance across the six benchmark datasets.}
+\caption{Nemenyi critical difference diagram at $\alpha = 0.05$. Lower average ranks indicate superior performance across the six benchmark datasets.}
 \label{fig:cd_plot}
 \end{figure}
 
@@ -470,7 +475,7 @@ Returning to the three initial research questions:
 
 \section{Conclusion}
 
-This paper conducted a comparative empirical evaluation of three feedforward neural network training algorithms: stochastic gradient descent (SGD) with momentum, scaled conjugate gradient (SCG) optimization, and the dynamic physical LeapFrog optimizer. All neural network architectures, analytic backpropagation routines, and optimization solvers were developed from scratch in Python. Evaluation was conducted across three benchmark classification problems and three function approximation problems using five-fold cross-validation. SCG achieved the best overall performance, attaining an average rank of $1.25$ and demonstrating statistically significant superiority over SGD ($p = 0.0068$) based on the Friedman omnibus test and Nemenyi critical difference analysis. LeapFrog demonstrated intermediate performance, outperforming first-order gradient descent via dynamic velocity resets. Future research will focus on extending line-search-free second-order methods and physical trajectory optimizers to deep convolutional and recurrent architectures.
+This paper conducted a comparative empirical evaluation of three feedforward neural network training algorithms: stochastic gradient descent (SGD) with momentum, scaled conjugate gradient (SCG) optimization, and the dynamic physical LeapFrog optimizer. All neural network architectures, analytic backpropagation routines, and optimization solvers were developed from scratch in Python. Evaluation was conducted across three benchmark classification problems and three function approximation problems using five-fold cross-validation. SCG achieved the best overall performance, attaining an average rank of $1.25$ and demonstrating statistically significant superiority over SGD ($p = 0.0002$) based on the Friedman omnibus test and Nemenyi critical difference analysis. LeapFrog demonstrated intermediate performance, outperforming first-order gradient descent via dynamic velocity resets. Future research will focus on extending line-search-free second-order methods and physical trajectory optimizers to deep convolutional and recurrent architectures.
 
 \begin{thebibliography}{99}
 
@@ -496,7 +501,7 @@ G. Cybenko, ``Approximation by superpositions of a sigmoidal function,'' \textit
 
 Table VII provides an alphabetical index of acronyms used in this document.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Alphabetical Summary of Acronyms}
 \label{tab:acronyms}
 \centering
@@ -506,7 +511,7 @@ Acronym & Definition \\
 \midrule
 CD & Critical Difference \\
 FNN & Feedforward Neural Network \\
-%LFROG & LeapFrog Optimization Algorithm \\
+LFROG & LeapFrog Optimization Algorithm \\
 MAE & Mean Absolute Error \\
 MSE & Mean Squared Error \\
 RMSE & Root Mean Squared Error \\
@@ -520,7 +525,7 @@ SGD & Stochastic Gradient Descent \\
 
 Table VIII provides an alphabetical summary of mathematical notation.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Alphabetical Summary of Mathematical Symbols}
 \label{tab:symbols}
 \centering
@@ -533,8 +538,8 @@ $\mathbf{b}$ & Bias parameter vector \\
 $C$ & Number of target classification classes \\
 $\delta$ & Backpropagation error delta term \\
 $\Delta t$ & LeapFrog dynamic integration timestep \\
-$\eta$ & Stochastic gradient descent learning rate \\
 $\gamma$ & Regularization weight decay parameter \\
+$\eta$ & Stochastic gradient descent learning rate \\
 $\lambda$ & Scaled conjugate gradient Hessian scaling factor \\
 $n_h$ & Number of hidden layer units \\
 $\mathbf{p}$ & Optimization search direction vector \\

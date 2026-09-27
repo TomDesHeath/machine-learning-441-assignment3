@@ -49,13 +49,12 @@ class LeapFrogOptimizer:
             if np.dot(v_full, a_next) < 0.0 or E_next > E_curr:
                 # Reset velocity at local minimum / valley floor
                 w_next = 0.5 * (w + w_next)
-                a_next = -model.compute_loss_and_grad(w_next, X, Y)[1]
+                E_curr, grad_next = model.compute_loss_and_grad(w_next, X, Y)
+                a_next = -grad_next
                 func_evals += 1
                 
                 v_half_next = 0.5 * a_next * dt
                 dt = max(dt * 0.5, self.dt_min)
-                E_curr, _ = model.compute_loss_and_grad(w_next, X, Y)
-                func_evals += 1
             else:
                 E_curr = E_next
                 # Slightly expand timestep if trajectory is smooth
